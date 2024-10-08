@@ -25,63 +25,58 @@
 #include "ndpi_api.h"
 #include "ndpi_private.h"
 
-
 #define GIT_PORT 9418
 
 static void ndpi_search_git(struct ndpi_detection_module_struct *ndpi_struct,
-			    struct ndpi_flow_struct *flow)
-{
-  struct ndpi_packet_struct * packet = &ndpi_struct->packet;
+                            struct ndpi_flow_struct *flow) {
+    struct ndpi_packet_struct *packet = &ndpi_struct->packet;
 
-  NDPI_LOG_DBG(ndpi_struct, "search Git\n");
+    NDPI_LOG_DBG(ndpi_struct, "search Git\n");
 
-  if((packet->tcp != NULL) && (packet->payload_packet_len > 4)) {
-    if((ntohs(packet->tcp->source) == GIT_PORT)
-       || (ntohs(packet->tcp->dest) == GIT_PORT)) {
-      const u_int8_t * pp = packet->payload;
-      u_int16_t payload_len = packet->payload_packet_len;  
-      u_int8_t found_git = 1;
-      u_int16_t offset = 0;
-      
-      while((offset+4) < payload_len) {
-	char len[5];
-	u_int32_t git_pkt_len;
+    if ((packet->tcp != NULL) && (packet->payload_packet_len > 4)) {
+        if ((ntohs(packet->tcp->source) == GIT_PORT) || (ntohs(packet->tcp->dest) == GIT_PORT)) {
+            const u_int8_t *pp = packet->payload;
+            u_int16_t payload_len = packet->payload_packet_len;
+            u_int8_t found_git = 1;
+            u_int16_t offset = 0;
 
-	memcpy(&len, &pp[offset], 4), len[4] = 0;
-	if(sscanf(len, "%x", &git_pkt_len) != 1) {
-	  found_git = 0;
-	  break;
-	}
+            while ((offset + 4) < payload_len) {
+                char len[5];
+                u_int32_t git_pkt_len;
 
-	if((payload_len < git_pkt_len) || (git_pkt_len == 0 /* Bad */)) {
-	  found_git = 0;
-	  break;
-	} else
-	  offset += git_pkt_len, payload_len -= git_pkt_len;      
-      }
+                memcpy(&len, &pp[offset], 4), len[4] = 0;
+                if (sscanf(len, "%x", &git_pkt_len) != 1) {
+                    found_git = 0;
+                    break;
+                }
 
-      if(found_git) {
-	NDPI_LOG_INFO(ndpi_struct, "found Git\n");
-	ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_GIT, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
-	return;
-      }
+                if ((payload_len < git_pkt_len) || (git_pkt_len == 0 /* Bad */)) {
+                    found_git = 0;
+                    break;
+                } else
+                    offset += git_pkt_len, payload_len -= git_pkt_len;
+            }
+
+            if (found_git) {
+                NDPI_LOG_INFO(ndpi_struct, "found Git\n");
+                ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_GIT, NDPI_PROTOCOL_UNKNOWN, NDPI_CONFIDENCE_DPI);
+                return;
+            }
+        }
     }
-  }
-  
-  NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
-}
 
+    NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
+}
 
 /* ***************************************************************** */
 
-void init_git_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id)
-{
-  ndpi_set_bitmask_protocol_detection("Git", ndpi_struct, *id,
-				      NDPI_PROTOCOL_GIT,
-				      ndpi_search_git,
-				      NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION,
-				      SAVE_DETECTION_BITMASK_AS_UNKNOWN,
-				      ADD_TO_DETECTION_BITMASK);
+void init_git_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id) {
+    ndpi_set_bitmask_protocol_detection("Git", ndpi_struct, *id,
+                                        NDPI_PROTOCOL_GIT,
+                                        ndpi_search_git,
+                                        NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION,
+                                        SAVE_DETECTION_BITMASK_AS_UNKNOWN,
+                                        ADD_TO_DETECTION_BITMASK);
 
-  *id += 1;
+    *id += 1;
 }

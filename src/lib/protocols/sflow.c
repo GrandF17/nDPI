@@ -25,45 +25,40 @@
 #include "ndpi_api.h"
 #include "ndpi_private.h"
 
-static void ndpi_search_sflow(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
-{
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
-  // const u_int8_t *packet_payload = packet->payload;
-  u_int32_t payload_len = packet->payload_packet_len;
+static void ndpi_search_sflow(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
+    struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+    // const u_int8_t *packet_payload = packet->payload;
+    u_int32_t payload_len = packet->payload_packet_len;
 
-  NDPI_LOG_DBG(ndpi_struct, "search sflow\n");
+    NDPI_LOG_DBG(ndpi_struct, "search sflow\n");
 
-  if((packet->udp != NULL)
-     && (payload_len >= 24)
-     /* Version */
-     && ntohl(get_u_int32_t(packet->payload, 0)) == 0x00000005
-     /* Agent Address type: IPv4 / IPv6 */
-     && (ntohl(get_u_int32_t(packet->payload, 4)) == 0x00000001 ||
-         ntohl(get_u_int32_t(packet->payload, 4)) == 0x00000002)) {
-    NDPI_LOG_INFO(ndpi_struct, "found (probably) sflow\n");
-    if (flow->packet_counter >= 2)
-    {
-      NDPI_LOG_INFO(ndpi_struct, "found sflow\n");
-      ndpi_set_detected_protocol(ndpi_struct, flow,
-                                 NDPI_PROTOCOL_SFLOW,
-                                 NDPI_PROTOCOL_UNKNOWN,
-                                 NDPI_CONFIDENCE_DPI);
+    if ((packet->udp != NULL) && (payload_len >= 24)
+        /* Version */
+        && ntohl(get_u_int32_t(packet->payload, 0)) == 0x00000005
+        /* Agent Address type: IPv4 / IPv6 */
+        && (ntohl(get_u_int32_t(packet->payload, 4)) == 0x00000001 ||
+            ntohl(get_u_int32_t(packet->payload, 4)) == 0x00000002)) {
+        NDPI_LOG_INFO(ndpi_struct, "found (probably) sflow\n");
+        if (flow->packet_counter >= 2) {
+            NDPI_LOG_INFO(ndpi_struct, "found sflow\n");
+            ndpi_set_detected_protocol(ndpi_struct, flow,
+                                       NDPI_PROTOCOL_SFLOW,
+                                       NDPI_PROTOCOL_UNKNOWN,
+                                       NDPI_CONFIDENCE_DPI);
+        }
+        return;
     }
-    return;
-  }
 
-  NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
+    NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
 
-void init_sflow_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id)
-{
-  ndpi_set_bitmask_protocol_detection("sFlow", ndpi_struct, *id,
-				      NDPI_PROTOCOL_SFLOW,
-				      ndpi_search_sflow,
-				      NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_UDP_WITH_PAYLOAD,
-				      SAVE_DETECTION_BITMASK_AS_UNKNOWN,
-				      ADD_TO_DETECTION_BITMASK);
+void init_sflow_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id) {
+    ndpi_set_bitmask_protocol_detection("sFlow", ndpi_struct, *id,
+                                        NDPI_PROTOCOL_SFLOW,
+                                        ndpi_search_sflow,
+                                        NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_UDP_WITH_PAYLOAD,
+                                        SAVE_DETECTION_BITMASK_AS_UNKNOWN,
+                                        ADD_TO_DETECTION_BITMASK);
 
-  *id += 1;
+    *id += 1;
 }
-
