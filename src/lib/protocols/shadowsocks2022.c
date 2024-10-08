@@ -33,6 +33,9 @@ static void ndpi_search_shadowsocks2022(struct ndpi_detection_module_struct *ndp
     NDPI_LOG_DBG(ndpi_struct, "search shadowsocks2022\n");
 
     // code here
+    if (flow->entropy > 0.9) {
+        NDPI_LOG_INFO(ndpi_struct, "found (probably) shadowsocks2022\n");
+    }
 
     NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
