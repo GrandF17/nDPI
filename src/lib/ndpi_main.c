@@ -5644,6 +5644,9 @@ static int ndpi_callback_init(struct ndpi_detection_module_struct *ndpi_str) {
   /* STUN */
   init_stun_dissector(ndpi_str, &a);
 
+  /* SHADOWSOCKS_2022*/
+  init_shadowsocks2022_dissector(ndpi_str, &a);
+
   /* SIP */
   init_sip_dissector(ndpi_str, &a);
 
